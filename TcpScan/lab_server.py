@@ -99,6 +99,15 @@ EXPECTED_BANNERS = {
     9090: "",
 }
 
+# Service the scanner should name from the banner. 9090 is left out: with no
+# banner the name falls back to the OS port table, which varies by system.
+EXPECTED_SERVICES = {
+    9021: "ftp",
+    9022: "ssh",
+    9025: "smtp",
+    9080: "http",
+}
+
 
 def start_services() -> list[LabServer]:
     servers = []
@@ -172,6 +181,13 @@ def verify(scanner: Path) -> int:
                 results.append(check(
                     f"banner on {port} ({SERVICES[port][0]})", ok, f"got {got!r}"))
 
+            for port, name in EXPECTED_SERVICES.items():
+                r = by_port.get(port, {})
+                results.append(check(
+                    f"service on {port} identified from banner",
+                    r.get("service") == name and r.get("service_source") == "banner",
+                    f"got {r.get('service')!r} via {r.get('service_source')!r}"))
+
             results.append(check(
                 "summary counts are consistent",
                 data["summary"]["open"] == len(open_ports)
@@ -184,6 +200,9 @@ def verify(scanner: Path) -> int:
             results.append(check(
                 "--no-banner returns no banners",
                 all(r["banner"] == "" for r in data2["results"])))
+            results.append(check(
+                "--no-banner never names a service from a banner",
+                all(r["service_source"] != "banner" for r in data2["results"])))
     finally:
         stop_services(servers)
 
