@@ -13,6 +13,7 @@ Examples:
 
 import argparse
 import json
+import re
 import socket
 import sys
 import time
@@ -28,6 +29,16 @@ TOP_PORTS = [
 HTTP_PORTS = {80, 8000, 8008, 8080, 8888}
 
 MAX_BANNER_LEN = 200
+
+# Banner patterns, checked in order. The first match names the service.
+BANNER_SIGNATURES = [
+    (re.compile(r"^SSH-\d"), "ssh"),
+    (re.compile(r"^HTTP/\d"), "http"),
+    (re.compile(r"^RFB \d"), "vnc"),
+    (re.compile(r"^220[ -].*smtp", re.IGNORECASE), "smtp"),
+    (re.compile(r"^220[ -].*ftp", re.IGNORECASE), "ftp"),
+    (re.compile(r"^\* OK.*imap", re.IGNORECASE), "imap"),
+]
 
 
 def parse_ports(spec: str) -> list[int]:
@@ -66,6 +77,14 @@ def service_name(port: int) -> str:
         return "unknown"
 
 
+def identify_service(banner: str) -> str:
+    """Name the service from its banner, or return an empty string."""
+    for pattern, name in BANNER_SIGNATURES:
+        if pattern.search(banner):
+            return name
+    return ""
+
+
 def grab_banner(sock: socket.socket, port: int, host: str, timeout: float) -> str:
     """Return the first line the service sends, or an empty string."""
     probe = f"HEAD / HTTP/1.0\r\nHost: {host}\r\nUser-Agent: tcpscan\r\n\r\n".encode()
@@ -92,7 +111,8 @@ def grab_banner(sock: socket.socket, port: int, host: str, timeout: float) -> st
 
 def scan_port(ip: str, host: str, port: int, timeout: float, banner: bool,
               banner_timeout: float) -> dict:
-    result = {"port": port, "state": "filtered", "service": "", "banner": ""}
+    result = {"port": port, "state": "filtered", "service": "",
+              "service_source": "", "banner": ""}
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.settimeout(timeout)
     try:
@@ -103,9 +123,16 @@ def scan_port(ip: str, host: str, port: int, timeout: float, banner: bool,
         pass  # timeout, no route to host, etc.: stays "filtered"
     else:
         result["state"] = "open"
-        result["service"] = service_name(port)
         if banner:
             result["banner"] = grab_banner(sock, port, host, banner_timeout)
+        detected = identify_service(result["banner"])
+        if detected:
+            result["service"], result["service_source"] = detected, "banner"
+        else:
+            # No usable banner: fall back to the port number, which is only a guess.
+            result["service"] = service_name(port)
+            if result["service"] != "unknown":
+                result["service_source"] = "port"
     finally:
         sock.close()
     return result
@@ -204,7 +231,9 @@ def write_markdown(report: dict, path: str) -> None:
         "",
         "- Connect scan (full TCP handshake). `filtered` ports mean a timeout, "
         "usually a firewall or a host that is down.",
-        "- The service name comes from the port number, not from fingerprinting. "
+        "- The service name comes from the banner when it matches a known "
+        "signature, otherwise from the port number, which is only a guess. "
+        "The JSON output has a `service_source` field with the origin. "
         "Verify manually.",
         "",
     ]
