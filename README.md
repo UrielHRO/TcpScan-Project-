@@ -56,7 +56,7 @@ Python 3.9 or newer.
 ## Installation
 
 ```
-git clone https://github.com/UrielHRO/tcpscan.git
+https://github.com/UrielHRO/TcpScan-Project-.git
 cd tcpscan
 python tcpscan.py --help
 ```
