@@ -1,0 +1,110 @@
+{
+  "target": "127.0.0.1",
+  "ip": "127.0.0.1",
+  "started_utc": "2026-11-22T13:17:38+00:00",
+  "duration_s": 0.76,
+  "settings": {
+    "ports_scanned": 13,
+    "threads": 100,
+    "timeout_s": 3.0,
+    "banner_grab": true
+  },
+  "summary": {
+    "open": 5,
+    "closed": 8,
+    "filtered": 0
+  },
+  "results": [
+    {
+      "port": 9020,
+      "state": "closed",
+      "service": "",
+      "service_source": "",
+      "banner": ""
+    },
+    {
+      "port": 9021,
+      "state": "open",
+      "service": "ftp",
+      "service_source": "banner",
+      "banner": "220 lab-ftpd ready"
+    },
+    {
+      "port": 9022,
+      "state": "open",
+      "service": "ssh",
+      "service_source": "banner",
+      "banner": "SSH-2.0-OpenSSH_8.9p1 lab"
+    },
+    {
+      "port": 9023,
+      "state": "closed",
+      "service": "",
+      "service_source": "",
+      "banner": ""
+    },
+    {
+      "port": 9024,
+      "state": "closed",
+      "service": "",
+      "service_source": "",
+      "banner": ""
+    },
+    {
+      "port": 9025,
+      "state": "open",
+      "service": "smtp",
+      "service_source": "banner",
+      "banner": "220 mail.lab ESMTP ready"
+    },
+    {
+      "port": 9026,
+      "state": "closed",
+      "service": "",
+      "service_source": "",
+      "banner": ""
+    },
+    {
+      "port": 9027,
+      "state": "closed",
+      "service": "",
+      "service_source": "",
+      "banner": ""
+    },
+    {
+      "port": 9028,
+      "state": "closed",
+      "service": "",
+      "service_source": "",
+      "banner": ""
+    },
+    {
+      "port": 9029,
+      "state": "closed",
+      "service": "",
+      "service_source": "",
+      "banner": ""
+    },
+    {
+      "port": 9030,
+      "state": "closed",
+      "service": "",
+      "service_source": "",
+      "banner": ""
+    },
+    {
+      "port": 9080,
+      "state": "open",
+      "service": "http",
+      "service_source": "banner",
+      "banner": "HTTP/1.1 200 OK"
+    },
+    {
+      "port": 9090,
+      "state": "open",
+      "service": "unknown",
+      "service_source": "",
+      "banner": ""
+    }
+  ]
+}

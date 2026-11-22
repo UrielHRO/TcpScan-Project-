@@ -1,0 +1,49 @@
+# GitLab CI pipeline for tcpscan.
+# Stages: lint -> test -> report
+# The scanner uses only the Python standard library, so no dependency install is needed.
+
+stages:
+  - lint
+  - test
+  - report
+
+default:
+  interruptible: true
+
+lint:
+  stage: lint
+  image: python:3.12-slim
+  before_script:
+    - pip install --quiet ruff
+  script:
+    # pycodestyle errors and pyflakes only (line length ignored), targeting the minimum supported Python (3.9).
+    # The rules are pinned so a newer ruff release cannot change the result.
+    - ruff check --isolated --select E,F --ignore E501 --target-version py39 TcpScan
+
+test:
+  stage: test
+  image: python:${PYTHON_VERSION}-slim
+  parallel:
+    matrix:
+      - PYTHON_VERSION: ["3.9", "3.11", "3.12"]
+  script:
+    - bash scripts/ci_check.sh
+
+report:
+  stage: report
+  image: python:3.12-slim
+  script:
+    # Scan the local lab (ports 9020-9030, 9080, 9090) and keep the reports as job artifacts.
+    # lab_server.py --verify already proves the results are correct; this job only publishes the output.
+    - mkdir -p reports
+    - python TcpScan/lab_server.py > reports/lab.log 2>&1 &
+    - LAB_PID=$!
+    - sleep 2
+    - python TcpScan/tcpscan.py 127.0.0.1 -p 9020-9030,9080,9090 --timeout 3 --json reports/lab_scan.json --md reports/lab_report.md --all-states -q
+    - kill $LAB_PID || true
+  artifacts:
+    paths:
+      - reports/
+    expire_in: 2 weeks
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH

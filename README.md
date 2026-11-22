@@ -56,8 +56,8 @@ Python 3.9 or newer.
 ## Installation
 
 ```
-https://github.com/UrielHRO/TcpScan-Project-.git
-cd tcpscan
+git clone https://github.com/UrielHRO/TcpScan-Project-.git
+cd TcpScan-Project-/TcpScan
 python tcpscan.py --help
 ```
 
@@ -98,8 +98,10 @@ Exit codes: `0` on success, `2` for invalid arguments, `1` if the host cannot be
 
 | Path | Purpose |
 |---|---|
-| `tcpscan.py` | The scanner |
-| `lab_server.py` | Local test lab and automated check for the scanner |
+| `TcpScan/tcpscan.py` | The scanner |
+| `TcpScan/lab_server.py` | Local test lab and automated check for the scanner |
+| `scripts/ci_check.sh` | Syntax check and lab verification, used locally and by the pipeline |
+| `.gitlab-ci.yml` | GitLab CI pipeline (lint, tests on Python 3.9, 3.11 and 3.12, lab reports) |
 | `examples/` | Real output of a scan against the lab |
 | `LICENSE` | MIT license |
 | `README.md` | This file |
@@ -149,6 +151,14 @@ It starts the lab, runs the scanner against it twice (with and without banner gr
 `lab_server.py` looks for `tcpscan.py` in its own folder. Use `--scanner PATH` if they are in different places.
 
 To watch a scan arrive, run `python lab_server.py` in one terminal (it prints a line per connection) and the scanner in another. Do not run `--verify` while the lab is already running, because both need the same ports.
+
+### Continuous integration
+
+The GitLab pipeline in `.gitlab-ci.yml` has three stages. `lint` runs ruff with the pycodestyle and pyflakes rules only. `test` runs `scripts/ci_check.sh` on Python 3.9, 3.11 and 3.12. `report` scans the lab on the default branch and keeps the JSON and Markdown output as job artifacts. The same checks run locally from the repository root:
+
+```
+bash scripts/ci_check.sh
+```
 
 ### Windows timeout behavior
 
